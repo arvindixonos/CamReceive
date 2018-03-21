@@ -62,6 +62,7 @@
      <Compile Include="Assets\JustMove.cs" />
      <Compile Include="Assets\ReceiveVideo.cs" />
      <Compile Include="Assets\SkypeManager.cs" />
+     <Compile Include="Assets\SoundStreamTester.cs" />
      <Compile Include="Assets\StdStreamReader.cs" />
      <Compile Include="Assets\StreamOutput.cs" />
      <Compile Include="Assets\StreamReceiver.cs" />
