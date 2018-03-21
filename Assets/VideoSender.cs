@@ -48,6 +48,9 @@ public class VideoSender : MonoBehaviour
         //  + "\" http://13.126.154.86:8090/"
         //  + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f segment -segment_time 2 -reset_timestamps 1 -vcodec libvpx -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast  " + path;
 
+        if(UnityEngine.WebCamTexture.devices.Length == 0)
+            return;
+
         string opt = "-y -re -rtbufsize 1024M -f dshow -video_size 640x480 -framerate 24  -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
             + " http://13.126.154.86:8090/"
             + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") 

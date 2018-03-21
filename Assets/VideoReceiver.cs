@@ -45,6 +45,8 @@ public class VideoReceiver : MonoBehaviour
 
         string opt = "-y -i rtsp://13.126.154.86:5454/" + (SkypeManager.Instance.isCaller ? "receiver.mpeg4" : "caller.mpeg4") + " -f image2pipe -vcodec mjpeg -";
 
+        // string opt = "-nostdin -y -i http://13.126.154.86:8090/callerAudio.mp3 -f s16le -acodec pcm_s16le -";
+
         print(opt);
 
         ProcessStartInfo info = new ProcessStartInfo(ffmpegPath, opt);

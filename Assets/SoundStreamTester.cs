@@ -19,6 +19,14 @@ using System.Media;
 
 public class SoundStreamTester : MonoBehaviour
 {
+	int numDataPerRead = 500;
+    byte[] data;
+    byte[] tempData = new byte[20000];
+    int count = 0;
+    byte[] pattern;
+
+    byte[] newData;
+
     SoundPlayer soundPlayer = new SoundPlayer();
 
     Process senderProcess;
@@ -27,9 +35,19 @@ public class SoundStreamTester : MonoBehaviour
 
     private StreamReceiver streamReceiver;
 
-    void Start()
+	private BinaryReader stdout;
+
+	Thread audioThread;
+	
+	[DllImport("msvcrt.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern int memcmp(byte[] b1, byte[] b2, long count);
+
+
+    public void StartReceivingAudio()
     {
         Application.runInBackground = true;
+
+		newData = new byte[numDataPerRead];
 
         ffmpegPath = FFmpegConfig.BinaryPath;
 
@@ -47,7 +65,7 @@ public class SoundStreamTester : MonoBehaviour
         //  + "\" http://13.126.154.86:8090/"
         //  + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f segment -segment_time 2 -reset_timestamps 1 -vcodec libvpx -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast  " + path;
 
-        string opt = "-y -i http://13.126.154.86:8090/callerAudio.wav -f s16le -acodec pcm_s16le -";
+        string opt = "-nostdin -y -i rtsp://13.126.154.86:5454/callerAudio.mp3 -f s16le -acodec pcm_s16le -";
 
         // + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -";
 
@@ -56,10 +74,10 @@ public class SoundStreamTester : MonoBehaviour
         UnityEngine.Debug.Log(opt);
 
         info.UseShellExecute = false;
-        info.CreateNoWindow = false;
+        info.CreateNoWindow = true;
         info.RedirectStandardInput = true;
         info.RedirectStandardOutput = true;
-        // info.RedirectStandardError = false;
+        info.RedirectStandardError = true;
 
         senderProcess = new Process();
         senderProcess.StartInfo = info;
@@ -71,8 +89,87 @@ public class SoundStreamTester : MonoBehaviour
 
         senderProcess.Start();
 
+		stdout = new BinaryReader(senderProcess.StandardError.BaseStream);
+
+		pattern = new byte[4];
+        pattern[0] = 52;
+        pattern[1] = 49;
+		pattern[2] = 46;
+		pattern[3] = 46;
+
+		audioThread = new Thread(new ThreadStart(ThreadUpdate));
+        audioThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioThread.Start();
+
         // soundPlayer.Stream = senderProcess.StandardOutput.BaseStream;
 		// soundPlayer.PlaySync();
+    }
+
+	public void ThreadUpdate()
+    {
+        // Profiler.BeginThreadProfiling("TLSKYPE_THREADS", "Sender Thread");
+
+        while (true)
+        {
+            int bytesRead = numDataPerRead;
+
+            newData = stdout.ReadBytes(numDataPerRead); 
+
+            // bytesRead = stdout.Read(newData, 0, numDataPerRead);
+
+            // bytesRead = streamReader.Read(newData, 0, numDataPerRead);
+
+            print(bytesRead);
+
+            int index = SearchBytePattern();
+
+            if (index != -1)
+            {
+                Buffer.BlockCopy(newData, 0, tempData, count, index);
+                count += index;
+
+                data = new byte[count];
+                Buffer.BlockCopy(tempData, 0, data, 0, count);
+
+                index += 2;
+
+                Buffer.BlockCopy(newData, index, tempData, 0, bytesRead - index);
+                count = bytesRead - index;
+
+				print("GOT ONE");
+            }
+            else
+            {
+                Buffer.BlockCopy(newData, 0, tempData, count, bytesRead);
+                count += bytesRead;
+            }
+        }
+
+        // Profiler.EndThreadProfiling();
+    }
+
+	 public int SearchBytePattern()
+    {
+        int patternLength = pattern.Length;
+        int totalLength = newData.Length;
+        byte firstMatchByte = pattern[0];
+
+		// Debug.Log(newData[0] + " " + newData[1]);
+
+        for (int i = 0; i < totalLength; i++)
+        {
+            if (firstMatchByte == newData[i] && totalLength - i >= patternLength)
+            {
+                byte[] match = new byte[patternLength];
+                Buffer.BlockCopy(newData, i, match, 0, patternLength);
+                if (memcmp(pattern, match, patternLength) == 0)
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
     }
 
     void ErrorDataReceived(object sender, DataReceivedEventArgs e)
@@ -96,18 +193,18 @@ public class SoundStreamTester : MonoBehaviour
 
     void OnDestroy()
     {
-        if (senderProcess != null)
+		if (senderProcess != null)
             senderProcess.Kill();
 
-        if (streamReceiver != null)
-            streamReceiver.AbortThread();
+         if (audioThread != null)
+            audioThread.Abort();
     }
 
-    void Update()
-    {
-        if (streamReceiver != null)
-        {
-            streamReceiver.DrawFrame();
-        }
-    }
+	void Update()
+	{
+		if(Input.GetKeyUp(KeyCode.A))
+		{
+			StartReceivingAudio();
+		}
+	}
 }

@@ -2,3 +2,6 @@ Library/
 obj/
 Temp/
 etc/
+Assets/StreamingAssets/FFmpegOut/Windows/output.mp4
+Assets/StreamingAssets/FFmpegOut/Windows/output.mp4.meta
+Assets/StreamingAssets/FFmpegOut/Windows/oo.mp4

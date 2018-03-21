@@ -34,7 +34,7 @@ public class StreamReceiver
     [DllImport("msvcrt.dll", SetLastError = true, CharSet = CharSet.Auto)]
     public static extern int memcmp(byte[] b1, byte[] b2, long count);
 
-    
+
 
     public StreamReceiver(StreamReader stream, RawImage targetImage, Vector2 textureSize)
     {
@@ -68,16 +68,13 @@ public class StreamReceiver
             int bytesRead = numDataPerRead;
 
             // newData = stdout.ReadBytes(numDataPerRead); 
-
             bytesRead = stdout.Read(newData, 0, numDataPerRead);
 
             // bytesRead = streamReader.Read(newData, 0, numDataPerRead);
 
-            // Debug.Log(bytesRead);
-
             int index = SearchBytePattern();
 
-			// Debug.Log(index);
+            // Debug.Log(index);
 
             if (index != -1)
             {
@@ -108,7 +105,7 @@ public class StreamReceiver
         int totalLength = newData.Length;
         byte firstMatchByte = pattern[0];
 
-		// Debug.Log(newData[0] + " " + newData[1]);
+        // Debug.Log(newData[0] + " " + newData[1]);
 
         for (int i = 0; i < totalLength; i++)
         {
