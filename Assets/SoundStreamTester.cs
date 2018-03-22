@@ -145,11 +145,14 @@ public class SoundStreamTester : MonoBehaviour
         audioPlayThread = new Thread(new ThreadStart(AudioPlayUpdate));
         audioPlayThread.Priority = System.Threading.ThreadPriority.Highest;
         audioPlayThread.Start();
+
+        WaveOut.InitWODevice(44100, 2, 16, false);
     }
 
     int numHeaderBytes = 44;
+    woLib WaveOut = new woLib();
 
-    public void AudioPlayUpdate()
+    public unsafe void AudioPlayUpdate()
     {
         int outID = 0;
         while (true)
@@ -161,31 +164,37 @@ public class SoundStreamTester : MonoBehaviour
                 byte[] currentAudioBuffer = audioBuffers[0];
                 audioBuffers.RemoveAt(0);
 
-                byte[] audioBufferWithHeader = new byte[currentAudioBuffer.Length + numHeaderBytes];
-                Buffer.BlockCopy(headerBytes, 0, audioBufferWithHeader, 0, numHeaderBytes);
-                Buffer.BlockCopy(currentAudioBuffer, 0, audioBufferWithHeader, numHeaderBytes, currentAudioBuffer.Length);
+                // byte[] audioBufferWithHeader = new byte[currentAudioBuffer.Length + numHeaderBytes];
+                // Buffer.BlockCopy(headerBytes, 0, audioBufferWithHeader, 0, numHeaderBytes);
+                // Buffer.BlockCopy(currentAudioBuffer, 0, audioBufferWithHeader, numHeaderBytes, currentAudioBuffer.Length);
 
-                byte[] chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 8);
-                Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 4, 4);
+                // byte[] chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 8);
+                // Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 4, 4);
 
-                chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 44);
-                Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 40, 4);
+                // chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 44);
+                // Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 40, 4);
 
                 // FileStream ourFileStream = File.Create("ourout" + outID + ".wav");
                 // ourFileStream.Write(audioBufferWithHeader, 0, audioBufferWithHeader.Length);
                 // ourFileStream.Close();
 
-                print(audioBufferWithHeader.Length);
+                // print(audioBufferWithHeader.Length);
 
-                outID += 1;
+                // outID += 1;
 
-                memoryStream = new MemoryStream(audioBufferWithHeader, 0, audioBufferWithHeader.Length);
+                // memoryStream = new MemoryStream(audioBufferWithHeader, 0, audioBufferWithHeader.Length);
 
-                soundPlayer = new SoundPlayer();
-                soundPlayer.Stream = memoryStream;
-                soundPlayer.Play();
+                // soundPlayer = new SoundPlayer();
+                // soundPlayer.Stream = memoryStream;
+                // soundPlayer.Play();
 
                 // print("Finished");
+
+                fixed (byte* p = currentAudioBuffer)
+                {
+                    IntPtr pPCM = (IntPtr)p;
+                	WaveOut.SendWODevice(pPCM, (uint)currentAudioBuffer.Length);
+                }
 
                 soundPlayer = null;
             }
@@ -232,7 +241,7 @@ public class SoundStreamTester : MonoBehaviour
 
             // break;
 
-            if(!firstTime)
+            if (!firstTime)
             {
                 Array.Resize(ref newData, bytesAdded + numDataPerRead);
             }
@@ -251,10 +260,10 @@ public class SoundStreamTester : MonoBehaviour
             }
 
             bytesAdded += bytesRead;
-            
+
             Array.Resize(ref newData, bytesAdded);
 
-            if(bytesAdded >= totalBufferAdd)
+            if (bytesAdded >= totalBufferAdd)
             {
                 audioBuffers.Add(newData);
                 print("Adding " + audioBuffers.Count);
@@ -319,6 +328,8 @@ public class SoundStreamTester : MonoBehaviour
 
         if (soundPlayer != null)
             soundPlayer.Stop();
+
+		WaveOut.Dispose();	
     }
 
     void Update()
