@@ -5,6 +5,10 @@
 // Note, because there are some unmanaged resources required in this interface, the class is declared as IDisposable; in consequence there is a Dispose method included to delete
 // them when finished.
 
+using System;
+using System.Runtime.InteropServices;
+using System.Threading;
+
 public class woLib : IDisposable
 {
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
