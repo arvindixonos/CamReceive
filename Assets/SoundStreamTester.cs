@@ -19,12 +19,8 @@ using System.Media;
 
 public class SoundStreamTester : MonoBehaviour
 {
-	int numDataPerRead = 500;
-    byte[] data;
-    byte[] tempData = new byte[20000];
-    int count = 0;
+    int numDataPerRead = 5000;
     byte[] pattern;
-
     byte[] newData;
 
     SoundPlayer soundPlayer = new SoundPlayer();
@@ -35,19 +31,62 @@ public class SoundStreamTester : MonoBehaviour
 
     private StreamReceiver streamReceiver;
 
-	private BinaryReader stdout;
+    private BinaryReader stdout;
 
-	Thread audioThread;
-	
-	[DllImport("msvcrt.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    Thread audioFetchThread;
+    Thread audioPlayThread;
+
+    [DllImport("msvcrt.dll", SetLastError = true, CharSet = CharSet.Auto)]
     public static extern int memcmp(byte[] b1, byte[] b2, long count);
 
+    MemoryStream memoryStream = new MemoryStream();
+
+    private bool firstTime = true;
+    private byte[] headerBytes;
+
+    private List<byte[]> audioBuffers = new List<byte[]>();
+
+    void Start()
+    {
+        // FileStream fileStream = File.Open("ourout1.wav", FileMode.Open, FileAccess.Read);
+
+        // print(fileStream.Length);
+
+        // byte[] inbyte = new byte[(int)fileStream.Length];
+
+        // fileStream.Read(inbyte, 0, inbyte.Length);
+
+        // // // // fileStream.Close();
+
+        // byte[] sizeByte = new byte[4];
+        // int j = 0;
+        // for (int i = 8; i < 12; i++)
+        // {
+        //     // sizeByte[j] = inbyte[i];
+        //     print(i + " " + inbyte[i]);
+
+        //     j += 1;
+        // }
+
+        // print(BitConverter.ToInt16(inbyte, 34));
+
+        // // // fileStream.CopyTo(memoryStream);
+
+        // memoryStream = new MemoryStream(inbyte);
+
+        // soundPlayer.Stream = memoryStream;
+        // soundPlayer.Play();
+
+        // fileStream.Close();
+
+        // print("NEW");
+
+        StartReceivingAudio();
+    }
 
     public void StartReceivingAudio()
     {
         Application.runInBackground = true;
-
-		newData = new byte[numDataPerRead];
 
         ffmpegPath = FFmpegConfig.BinaryPath;
 
@@ -65,7 +104,7 @@ public class SoundStreamTester : MonoBehaviour
         //  + "\" http://13.126.154.86:8090/"
         //  + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f segment -segment_time 2 -reset_timestamps 1 -vcodec libvpx -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast  " + path;
 
-        string opt = "-nostdin -y -i rtsp://13.126.154.86:5454/callerAudio.mp3 -f s16le -acodec pcm_s16le -";
+        string opt = "-y -i rtsp://13.126.154.86:5454/callerAudio.mp3 -f wav -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -map_metadata -1 -";
 
         // + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -";
 
@@ -89,72 +128,148 @@ public class SoundStreamTester : MonoBehaviour
 
         senderProcess.Start();
 
-		stdout = new BinaryReader(senderProcess.StandardError.BaseStream);
+        stdout = new BinaryReader(senderProcess.StandardOutput.BaseStream);
 
-		pattern = new byte[4];
-        pattern[0] = 52;
-        pattern[1] = 49;
-		pattern[2] = 46;
-		pattern[3] = 46;
+        pattern = new byte[4];
+        pattern[0] = 82;
+        pattern[1] = 73;
+        pattern[2] = 70;
+        pattern[3] = 70;
 
-		audioThread = new Thread(new ThreadStart(ThreadUpdate));
-        audioThread.Priority = System.Threading.ThreadPriority.Highest;
-        audioThread.Start();
+        headerBytes = new byte[numHeaderBytes];
 
-        // soundPlayer.Stream = senderProcess.StandardOutput.BaseStream;
-		// soundPlayer.PlaySync();
+        audioFetchThread = new Thread(new ThreadStart(AudioFetchUpdate));
+        audioFetchThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioFetchThread.Start();
+
+        audioPlayThread = new Thread(new ThreadStart(AudioPlayUpdate));
+        audioPlayThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioPlayThread.Start();
     }
 
-	public void ThreadUpdate()
+    int numHeaderBytes = 44;
+
+    public void AudioPlayUpdate()
     {
-        // Profiler.BeginThreadProfiling("TLSKYPE_THREADS", "Sender Thread");
+        int outID = 0;
+        while (true)
+        {
+            if (audioBuffers.Count > 0)
+            {
+                // print("A");
+
+                byte[] currentAudioBuffer = audioBuffers[0];
+                audioBuffers.RemoveAt(0);
+
+                byte[] audioBufferWithHeader = new byte[currentAudioBuffer.Length + numHeaderBytes];
+                Buffer.BlockCopy(headerBytes, 0, audioBufferWithHeader, 0, numHeaderBytes);
+                Buffer.BlockCopy(currentAudioBuffer, 0, audioBufferWithHeader, numHeaderBytes, currentAudioBuffer.Length);
+
+                byte[] chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 8);
+                Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 4, 4);
+
+                chunkSize = BitConverter.GetBytes(audioBufferWithHeader.Length - 44);
+                Buffer.BlockCopy(chunkSize, 0, audioBufferWithHeader, 40, 4);
+
+                // FileStream ourFileStream = File.Create("ourout" + outID + ".wav");
+                // ourFileStream.Write(audioBufferWithHeader, 0, audioBufferWithHeader.Length);
+                // ourFileStream.Close();
+
+                print(audioBufferWithHeader.Length);
+
+                outID += 1;
+
+                memoryStream = new MemoryStream(audioBufferWithHeader, 0, audioBufferWithHeader.Length);
+
+                soundPlayer = new SoundPlayer();
+                soundPlayer.Stream = memoryStream;
+                soundPlayer.Play();
+
+                // print("Finished");
+
+                soundPlayer = null;
+            }
+
+            Thread.Sleep(10);
+        }
+    }
+
+    int totalBufferAdd = 200000;
+    public void AudioFetchUpdate()
+    {
+        int bytesAdded = 0;
+        newData = new byte[numDataPerRead];
 
         while (true)
         {
-            int bytesRead = numDataPerRead;
+            // FileStream fileStream = File.Open("1.wav", FileMode.Open, FileAccess.Read);
+            // stdout = new BinaryReader(fileStream);
 
-            newData = stdout.ReadBytes(numDataPerRead); 
+            //chunk 0
+            // int chunkID       = stdout.ReadInt32();
+            // int fileSize      = stdout.ReadInt32();
+            // int riffType      = stdout.ReadInt32();
 
-            // bytesRead = stdout.Read(newData, 0, numDataPerRead);
+            // // chunk 1
+            // int fmtID         = stdout.ReadInt32();
+            // int fmtSize       = stdout.ReadInt32(); // bytes for this chunk
+            // int fmtCode       = stdout.ReadInt16();
+            // int channels      = stdout.ReadInt16();
+            // int sampleRate    = stdout.ReadInt32();
+            // int byteRate      = stdout.ReadInt32();
+            // int fmtBlockAlign = stdout.ReadInt16();
+            // int bitDepth      = stdout.ReadInt16();
 
-            // bytesRead = streamReader.Read(newData, 0, numDataPerRead);
+            // // chunk 2
+            // int dataID = stdout.ReadInt32();
+            // int bytes = stdout.ReadInt32();
+
+            // print(chunkID + " " + bytes + " " + fileSize);
+
+            // // byte[] byteArray = stdout.ReadBytes(bytes);
+
+            // print(BitConverter.GetBytes(dataID)[0] + " " + BitConverter.GetBytes(dataID)[1] + " " + BitConverter.GetBytes(dataID)[2] + " " + BitConverter.GetBytes(dataID)[3]);
+
+            // break;
+
+            if(!firstTime)
+            {
+                Array.Resize(ref newData, bytesAdded + numDataPerRead);
+            }
+
+            int bytesRead = stdout.Read(newData, bytesAdded, numDataPerRead);
 
             print(bytesRead);
 
-            int index = SearchBytePattern();
-
-            if (index != -1)
+            if (firstTime)
             {
-                Buffer.BlockCopy(newData, 0, tempData, count, index);
-                count += index;
+                Buffer.BlockCopy(newData, 0, headerBytes, 0, numHeaderBytes);
 
-                data = new byte[count];
-                Buffer.BlockCopy(tempData, 0, data, 0, count);
+                firstTime = false;
 
-                index += 2;
-
-                Buffer.BlockCopy(newData, index, tempData, 0, bytesRead - index);
-                count = bytesRead - index;
-
-				print("GOT ONE");
+                continue;
             }
-            else
+
+            bytesAdded += bytesRead;
+            
+            Array.Resize(ref newData, bytesAdded);
+
+            if(bytesAdded >= totalBufferAdd)
             {
-                Buffer.BlockCopy(newData, 0, tempData, count, bytesRead);
-                count += bytesRead;
+                audioBuffers.Add(newData);
+                print("Adding " + audioBuffers.Count);
+                bytesAdded = 0;
             }
         }
-
-        // Profiler.EndThreadProfiling();
     }
 
-	 public int SearchBytePattern()
+    public int SearchBytePattern()
     {
         int patternLength = pattern.Length;
         int totalLength = newData.Length;
         byte firstMatchByte = pattern[0];
 
-		// Debug.Log(newData[0] + " " + newData[1]);
+        // Debug.Log(newData[0] + " " + newData[1]);
 
         for (int i = 0; i < totalLength; i++)
         {
@@ -193,18 +308,24 @@ public class SoundStreamTester : MonoBehaviour
 
     void OnDestroy()
     {
-		if (senderProcess != null)
+        if (senderProcess != null)
             senderProcess.Kill();
 
-         if (audioThread != null)
-            audioThread.Abort();
+        if (audioFetchThread != null)
+            audioFetchThread.Abort();
+
+        if (audioPlayThread != null)
+            audioPlayThread.Abort();
+
+        if (soundPlayer != null)
+            soundPlayer.Stop();
     }
 
-	void Update()
-	{
-		if(Input.GetKeyUp(KeyCode.A))
-		{
-			StartReceivingAudio();
-		}
-	}
+    void Update()
+    {
+        if (Input.GetKeyUp(KeyCode.A))
+        {
+            StartReceivingAudio();
+        }
+    }
 }
