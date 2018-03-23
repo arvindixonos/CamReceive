@@ -27,7 +27,7 @@ public class VideoReceiver : MonoBehaviour
 
     private StreamReceiver streamReceiver;
 
-    private SoundStreamReceiver   soundStreamReceiver;
+    private SoundStreamReceiver soundStreamReceiver;
 
     public void StartReceiveStream()
     {
@@ -55,9 +55,9 @@ public class VideoReceiver : MonoBehaviour
 
         info.UseShellExecute = false;
         info.CreateNoWindow = true;
-        info.RedirectStandardInput = true;
+        info.RedirectStandardInput = false;
         info.RedirectStandardOutput = true;
-        // info.RedirectStandardError = true;
+        info.RedirectStandardError = false;
 
         receiveProcess = new Process();
         receiveProcess.StartInfo = info;

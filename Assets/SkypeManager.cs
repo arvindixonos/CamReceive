@@ -43,7 +43,7 @@ public class SkypeManager : MonoBehaviour
         buttonCanvas.SetActive(true);
 
         networkView = GetComponent<NetworkView>();
-        Network.Connect("123.176.34.172", 7777);
+        Network.Connect("13.126.154.86", 7777);
 
         StopCoroutine("FileUploader");
         StartCoroutine("FileUploader");
@@ -157,11 +157,12 @@ public class SkypeManager : MonoBehaviour
 
     void Update()
     {
-        if (Network.connections.Length > 0)
-        {
-            NetworkPlayer networkPlayer = Network.connections[0];
+        // if (Network.connections.Length > 0)
+        // {
+        //     print("YES");
+        //     // NetworkPlayer networkPlayer = Network.connections[0];
 
-            // print(networkPlayer.guid);
-        }
+        //     // print(networkPlayer.guid);
+        // }
     }
 }

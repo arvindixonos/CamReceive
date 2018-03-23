@@ -64,9 +64,9 @@ public class VideoSender : MonoBehaviour
 
         info.UseShellExecute = false;
         info.CreateNoWindow = true;
-        info.RedirectStandardInput = true;
+        info.RedirectStandardInput = false;
         info.RedirectStandardOutput = true;
-        // info.RedirectStandardError = false;
+        info.RedirectStandardError = false;
 
         senderProcess = new Process();
         senderProcess.StartInfo = info;
