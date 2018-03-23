@@ -1,0 +1,16 @@
+-y -i http://123.176.34.172:8090/test1.mpg -f segment -reset_timestamps 1 C:/Users/TakeLeap05/Desktop/CamReceive/OutputVideo/output%03d.mp4
+
+-y -i http://123.176.34.172:8090/test1.mpg -f segment -reset_timestamps 1 -vcodec libx264 -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast C:/Users/TakeLeap05/Desktop/CamReceive/OutputVideo/output%03d.mp4
+
+-y -re -rtbufsize 100M -f dshow -i video="Logitech HD Webcam C270":audio="Microphone (HD Webcam C270)" http://123.176.34.172:8090/feed1.ffm -f segment -segment_time 2 -reset_timestamps 1 -vcodec libx264 -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast  C:/Users/TakeLeap05/Desktop/CamReceive/InputVideo/input%03d.mp4
+
+ffplay -fflags nobuffer -flags low_delay -framedrop -strict experimental http://123.176.34.172:8090/test1.mpg
+
+-y -re -rtbufsize 100M -f dshow -i video="Logitech HD Webcam C270":audio="Microphone (HD Webcam C270)" http://13.126.154.86:8090/feed1.ffm -vcodec libvpx -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast 
+
+-y -re -rtbufsize 100M -f dshow -i video="Logitech HD Webcam C270":audio="Microphone (HD Webcam C270)" http://13.126.154.86:8090/feed1.ffm -vcodec libx264 -pix_fmt yuv420p
+
+-y -re -rtbufsize 1024M -i c:\out.mp4 http://13.126.154.86:8090/feed1.ffm
+
+-y -re -rtbufsize 1024M -i c:\out.mp4 -an -f rtp rtp://13.126.154.86:5454/feed1.ffm
+
