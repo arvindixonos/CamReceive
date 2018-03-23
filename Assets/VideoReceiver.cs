@@ -27,6 +27,8 @@ public class VideoReceiver : MonoBehaviour
 
     private StreamReceiver streamReceiver;
 
+    private SoundStreamReceiver   soundStreamReceiver;
+
     public void StartReceiveStream()
     {
         Application.runInBackground = true;
@@ -69,6 +71,9 @@ public class VideoReceiver : MonoBehaviour
 
         streamReceiver = new StreamReceiver(receiveProcess.StandardOutput, receiverImage, textureSize);
         streamReceiver.StartReceivingStream();
+
+        soundStreamReceiver = new SoundStreamReceiver();
+        soundStreamReceiver.StartReceivingAudio();
     }
 
     void ErrorDataReceived(object sender, DataReceivedEventArgs e)
