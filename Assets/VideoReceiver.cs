@@ -45,7 +45,7 @@ public class VideoReceiver : MonoBehaviour
 
         // string opt = "-y -i http://13.126.154.86:8090/" + (SkypeManager.Instance.isCaller ? "test2.mpg" : "test1.mpg") + " -f segment -segment_time 2 -reset_timestamps 1 -vcodec libx264 -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast " + path;
 
-        string opt = "-y -i rtsp://13.126.154.86:5454/" + (SkypeManager.Instance.isCaller ? "receiver.mpeg4" : "caller.mpeg4") + " -f image2pipe -vcodec mjpeg -";
+        string opt = "-y -i rtsp://13.126.154.86:5454/" + (SkypeManager.Instance.isCaller ? "caller.mpeg4" : "caller.mpeg4") + " -f image2pipe -vcodec mjpeg -";
 
         // string opt = "-nostdin -y -i http://13.126.154.86:8090/callerAudio.mp3 -f s16le -acodec pcm_s16le -";
 
