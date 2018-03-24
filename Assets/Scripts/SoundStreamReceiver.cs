@@ -138,7 +138,6 @@ public class SoundStreamReceiver
         if (audioFetchThread != null)
             audioFetchThread.Abort();
 
-        WaveOut.CloseWODevice();
         WaveOut.Dispose();
     }
 }
