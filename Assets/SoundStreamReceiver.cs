@@ -130,7 +130,7 @@ public class SoundStreamReceiver
         UnityEngine.Debug.Log("disposed");
     }
 
-    void OnDestroy()
+    public void Destroy()
     {
         if (audioProcess != null)
             audioProcess.Kill();
@@ -140,10 +140,5 @@ public class SoundStreamReceiver
 
         WaveOut.CloseWODevice();
         WaveOut.Dispose();
-    }
-
-    void OnDisable()
-    {
-        OnDestroy();
     }
 }
