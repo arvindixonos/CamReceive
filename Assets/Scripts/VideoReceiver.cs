@@ -110,10 +110,8 @@ public class VideoReceiver : MonoBehaviour
         if (streamReceiver != null)
             streamReceiver.AbortThread();
 
-        if(soundStreamReceiver != null)
-        {
+        if (soundStreamReceiver != null)
             soundStreamReceiver.Destroy();
-        }    
     }
 
     void Update()

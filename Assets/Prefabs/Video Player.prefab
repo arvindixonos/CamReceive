@@ -49,6 +49,7 @@ VideoPlayer:
   m_Enabled: 1
   m_VideoClip: {fileID: 32900000, guid: d5169736c0fa770478b35e95dfe3969b, type: 3}
   m_TargetCameraAlpha: 1
+  m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
   m_TargetTexture: {fileID: 8400000, guid: 5c65aff32d0e831439759a2edf89748f, type: 2}
   m_TimeReference: 0

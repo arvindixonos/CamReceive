@@ -51,25 +51,25 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\B83.Win32.cs" />
-     <Compile Include="Assets\CustomBuffer.cs" />
      <Compile Include="Assets\FFmpegOut\CameraCapture.cs" />
      <Compile Include="Assets\FFmpegOut\FFmpegConfig.cs" />
      <Compile Include="Assets\FFmpegOut\FFmpegPipe.cs" />
      <Compile Include="Assets\FFmpegOut\Internal\Blitter.cs" />
-     <Compile Include="Assets\FileDragAndDrop.cs" />
-     <Compile Include="Assets\FileImporter.cs" />
-     <Compile Include="Assets\JustMove.cs" />
-     <Compile Include="Assets\ReceiveVideo.cs" />
-     <Compile Include="Assets\SkypeManager.cs" />
-     <Compile Include="Assets\SoundStreamReceiver.cs" />
-     <Compile Include="Assets\StdStreamReader.cs" />
-     <Compile Include="Assets\StreamOutput.cs" />
-     <Compile Include="Assets\StreamReceiver.cs" />
-     <Compile Include="Assets\VideoReceiver.cs" />
-     <Compile Include="Assets\VideoSender.cs" />
-     <Compile Include="Assets\WebCam.cs" />
-     <Compile Include="Assets\woLib.cs" />
+     <Compile Include="Assets\Scripts\B83.Win32.cs" />
+     <Compile Include="Assets\Scripts\CustomBuffer.cs" />
+     <Compile Include="Assets\Scripts\FileDragAndDrop.cs" />
+     <Compile Include="Assets\Scripts\FileImporter.cs" />
+     <Compile Include="Assets\Scripts\JustMove.cs" />
+     <Compile Include="Assets\Scripts\ReceiveVideo.cs" />
+     <Compile Include="Assets\Scripts\SkypeManager.cs" />
+     <Compile Include="Assets\Scripts\SoundStreamReceiver.cs" />
+     <Compile Include="Assets\Scripts\StdStreamReader.cs" />
+     <Compile Include="Assets\Scripts\StreamOutput.cs" />
+     <Compile Include="Assets\Scripts\StreamReceiver.cs" />
+     <Compile Include="Assets\Scripts\VideoReceiver.cs" />
+     <Compile Include="Assets\Scripts\VideoSender.cs" />
+     <Compile Include="Assets\Scripts\WebCam.cs" />
+     <Compile Include="Assets\Scripts\woLib.cs" />
      <None Include="Assets\FFmpegOut\Internal\Shader\CameraCapture.shader" />
      <None Include="Assets\DOTween\readme.txt" />
      <None Include="Assets\DOTween\DOTween43.xml" />
