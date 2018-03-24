@@ -31,10 +31,18 @@ public class SoundStreamReceiver
     private BinaryReader stdout;
 
     Thread audioFetchThread;
+    Thread audioPlayThread;
 
     private bool firstTime = true;
 
     woLib WaveOut = new woLib();
+
+
+    private bool audioPresent = false;
+
+    private int bytesRead = 0;
+
+
 
     public void StartReceivingAudio()
     {
@@ -86,20 +94,47 @@ public class SoundStreamReceiver
         audioFetchThread.Priority = System.Threading.ThreadPriority.Highest;
         audioFetchThread.Start();
 
+        audioPlayThread = new Thread(new ThreadStart(AudioPlayUpdate));
+        audioPlayThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioPlayThread.Start();
+
         WaveOut.InitWODevice(44100, 2, 16, false);
     }
 
-    public unsafe void AudioFetchUpdate()
+    public void AudioFetchUpdate()
     {
         newData = new byte[numDataPerRead];
 
         while (true)
         {
-            int bytesRead = stdout.Read(newData, 0, numDataPerRead);
+            if (audioPresent)
+            {
+                Thread.Sleep(10);
+                continue;
+            }
+
+            bytesRead = stdout.Read(newData, 0, numDataPerRead);
 
             if (firstTime)
             {
                 firstTime = false;
+                continue;
+            }
+
+            if (bytesRead > 0)
+                audioPresent = true;
+        }
+    }
+
+    public unsafe void AudioPlayUpdate()
+    {
+        newData = new byte[numDataPerRead];
+
+        while (true)
+        {
+            if (!audioPresent)
+            {
+                Thread.Sleep(10);
                 continue;
             }
 
@@ -108,6 +143,8 @@ public class SoundStreamReceiver
                 IntPtr pPCM = (IntPtr)p;
                 WaveOut.SendWODevice(pPCM, (uint)bytesRead);
             }
+
+            audioPresent = false;
         }
     }
 
@@ -137,6 +174,9 @@ public class SoundStreamReceiver
 
         if (audioFetchThread != null)
             audioFetchThread.Abort();
+
+        if (audioPlayThread != null)
+            audioPlayThread.Abort();
 
         WaveOut.Dispose();
     }

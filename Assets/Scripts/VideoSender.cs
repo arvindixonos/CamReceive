@@ -115,7 +115,7 @@ public class VideoSender : MonoBehaviour
             streamReceiver.AbortThread();
     }
 
-    void Update()
+    void OnPreRender()
     {
         if (streamReceiver != null)
         {

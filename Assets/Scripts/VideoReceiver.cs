@@ -114,7 +114,7 @@ public class VideoReceiver : MonoBehaviour
             soundStreamReceiver.Destroy();
     }
 
-    void Update()
+    void OnPreRender()
     {
         if (streamReceiver != null)
             streamReceiver.DrawFrame();
