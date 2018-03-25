@@ -56,12 +56,13 @@ public class VideoSender : MonoBehaviour
         //     + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
         //     + " -f image2pipe -vcodec mjpeg -";
 
-        string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
-                 + " http://13.126.154.86:8090/"
-                 + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
-                 + " -f image2pipe -vcodec mjpeg -";
+        // string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
+        //          + " http://13.126.154.86:8090/"
+        //          + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
+        //          + " -f image2pipe -vcodec mjpeg -";
 
-        // + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -";
+        string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
+       + " -f image2pipe -vcodec mjpeg -";
 
         var info = new ProcessStartInfo(ffmpegPath, opt);
 
@@ -108,11 +109,11 @@ public class VideoSender : MonoBehaviour
 
     void OnDestroy()
     {
-        if (senderProcess != null)
-            senderProcess.Kill();
-
         if (streamReceiver != null)
             streamReceiver.AbortThread();
+
+        if (senderProcess != null)
+            senderProcess.Kill();
     }
 
     void OnPreRender()

@@ -189,22 +189,15 @@ public class woLib : IDisposable
     public void CloseWODevice()
     {
         ResetWODevice();
-        // if (hwo != (IntPtr)0)
-        waveOutClose(hwo);
-        // if (rFrames != (IntPtr)0)
-        //     unsafe
-        //     {
-        //         int j = 200;
-        //         UInt32* i = (UInt32*)rFrames.ToPointer();
-        //         while ((0 < j--) && (*i != 0xffffffff))
-        //         {
-        //             UnityEngine.Debug.Log("Sleeping");
-        //             Thread.Sleep(10);           // check for waveout close to complete; timeout included if no callback is used.
-        //         }
-        //     }
-        // hwo = (IntPtr)0;
-
-        // waveOutClose(hwo);
+        if (hwo != (IntPtr)0) waveOutClose(hwo);
+        if (rFrames != (IntPtr)0)
+            unsafe
+            {
+                int j = 200;
+                UInt32* i = (UInt32*)rFrames.ToPointer();
+                while ((0 < j--) && (*i != 0xffffffff)) Thread.Sleep(10);           // check for waveout close to complete; timeout included if no callback is used.
+            }
+        hwo = (IntPtr)0;
     }
     //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // generic interface to deliver raw data to a wave out device - uses a raw audio buffer; data must remain valid until playout is complete so we copy them to a buffer prior to 
