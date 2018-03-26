@@ -1,11 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Diagnostics;
 using System.IO;
 using System;
-using FFmpegOut;
-using UnityEngine.UI;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Net.Sockets;
@@ -13,8 +10,6 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using UnityEngine.Video;
-using UnityEngine.Profiling;
 using System.Media;
 
 public class SoundStreamReceiver
@@ -23,8 +18,6 @@ public class SoundStreamReceiver
     byte[] newData;
 
     Process audioProcess;
-
-    private string ffmpegPath = "";
 
     private BinaryReader stdout;
 
@@ -41,11 +34,9 @@ public class SoundStreamReceiver
     private int bytesRead = 0;
 
 
-    public void StartReceivingAudio()
+    public void StartReceivingAudio(string ffmpegParams)
     {
-        Application.runInBackground = true;
-
-        ffmpegPath = FFmpegConfig.BinaryPath;
+        Console.WriteLine("Started Audio");
 
         //         string path = "InputVideo/input%03d.mp4";
 
@@ -61,35 +52,40 @@ public class SoundStreamReceiver
         //  + "\" http://13.126.154.86:8090/"
         //  + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm") + " -f segment -segment_time 2 -reset_timestamps 1 -vcodec libvpx -b 465k -pix_fmt yuv420p -profile:v baseline -preset ultrafast  " + path;
 
-        string opt = "-y -i rtsp://13.126.154.86:5454/" + (SkypeManager.Instance.isCaller ? "callerAudio.mp3" : "callerAudio.mp3") + " -f wav -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -map_metadata -1 -";
-        // string opt = "-y -f dshow -i audio=\"" + UnityEngine.Microphone.devices[0] + "\"" + " -vn -f wav -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -map_metadata -1 -";
+        // string opt = "-y -i rtsp://13.126.154.86:5454/" + (SkypeManager.Instance.isCaller ? "callerAudio.mp3" : "callerAudio.mp3") + " -f wav -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -map_metadata -1 -";
+        string opt = "-y -f dshow -i audio=\"Microphone (HD Webcam C310)\" -vn -f wav -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -map_metadata -1 -";
 
-        ProcessStartInfo info = new ProcessStartInfo(Application.streamingAssetsPath + "/FFmpegOut/Windows/WaveOutTestCSharp.exe", opt);
+        var info = new ProcessStartInfo("ffmpeg.exe", ffmpegParams);
 
-        UnityEngine.Debug.Log(opt);
+        Console.WriteLine(ffmpegParams);
 
         info.UseShellExecute = false;
         info.CreateNoWindow = true;
         info.RedirectStandardInput = false;
-        info.RedirectStandardOutput = false;
+        info.RedirectStandardOutput = true;
         info.RedirectStandardError = false;
 
         audioProcess = new Process();
         audioProcess.StartInfo = info;
-        audioProcess.EnableRaisingEvents = false;
+        audioProcess.EnableRaisingEvents = true;
+        audioProcess.Exited += new EventHandler(ProcessExited);
+        audioProcess.Disposed += new EventHandler(ProcessDisposed);
+        audioProcess.OutputDataReceived += new DataReceivedEventHandler(ProcessOutputDataReceived);
+        audioProcess.ErrorDataReceived += new DataReceivedEventHandler(ErrorDataReceived);
+
         audioProcess.Start();
 
-        // stdout = new BinaryReader(audioProcess.StandardOutput.BaseStream);
+        stdout = new BinaryReader(audioProcess.StandardOutput.BaseStream);
 
-        // audioFetchThread = new Thread(new ThreadStart(AudioFetchUpdate));
-        // audioFetchThread.Priority = System.Threading.ThreadPriority.Highest;
-        // audioFetchThread.Start();
+        audioFetchThread = new Thread(new ThreadStart(AudioFetchUpdate));
+        audioFetchThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioFetchThread.Start();
 
-        // audioPlayThread = new Thread(new ThreadStart(AudioPlayUpdate));
-        // audioPlayThread.Priority = System.Threading.ThreadPriority.Highest;
-        // audioPlayThread.Start();
+        audioPlayThread = new Thread(new ThreadStart(AudioPlayUpdate));
+        audioPlayThread.Priority = System.Threading.ThreadPriority.Highest;
+        audioPlayThread.Start();
 
-        // WaveOut.InitWODevice(44100, 2, 16, false);
+        WaveOut.InitWODevice(44100, 2, 16, false);
     }
 
     public void AudioFetchUpdate()
@@ -119,6 +115,8 @@ public class SoundStreamReceiver
 
     public unsafe void AudioPlayUpdate()
     {
+        Console.WriteLine("Audio Play");
+
         newData = new byte[numDataPerRead];
 
         while (true)
@@ -132,6 +130,7 @@ public class SoundStreamReceiver
             fixed (byte* p = newData)
             {
                 IntPtr pPCM = (IntPtr)p;
+
                 WaveOut.SendWODevice(pPCM, (uint)bytesRead);
             }
 
@@ -141,24 +140,25 @@ public class SoundStreamReceiver
 
     void ErrorDataReceived(object sender, DataReceivedEventArgs e)
     {
-        UnityEngine.Debug.Log("error " + e.Data);
+        Console.WriteLine("error " + e.Data);
     }
 
     void ProcessOutputDataReceived(object sender, DataReceivedEventArgs e)
     {
-        UnityEngine.Debug.Log(e.Data);
+        Console.WriteLine(e.Data);
     }
+
     void ProcessExited(object sender, EventArgs e)
     {
-        UnityEngine.Debug.Log("exited");
+        Console.WriteLine("exited");
     }
 
     void ProcessDisposed(object sender, EventArgs e)
     {
-        UnityEngine.Debug.Log("disposed");
+        Console.WriteLine("disposed");
     }
 
-    public void Destroy()
+    public void StopReceivingAudio()
     {
         WaveOut.Dispose();
 

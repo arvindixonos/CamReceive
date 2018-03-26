@@ -67,10 +67,10 @@ public class VideoReceiver : MonoBehaviour
         receiveProcess.OutputDataReceived += new DataReceivedEventHandler(ProcessOutputDataReceived);
         receiveProcess.ErrorDataReceived += new DataReceivedEventHandler(ErrorDataReceived);
 
-        // receiveProcess.Start();
+        receiveProcess.Start();
 
-        // streamReceiver = new StreamReceiver(receiveProcess.StandardOutput, receiverImage, textureSize);
-        // streamReceiver.StartReceivingStream();
+        streamReceiver = new StreamReceiver(receiveProcess.StandardOutput, receiverImage, textureSize);
+        streamReceiver.StartReceivingStream();
 
         soundStreamReceiver = new SoundStreamReceiver();
         soundStreamReceiver.StartReceivingAudio();
@@ -113,7 +113,7 @@ public class VideoReceiver : MonoBehaviour
         if (receiveProcess != null)
             receiveProcess.Kill();
 
-        print("Printing this");
+        // print("Printing this");
     }
 
     void OnPreRender()

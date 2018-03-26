@@ -20,6 +20,8 @@ public class VideoSender : MonoBehaviour
 {
     Process senderProcess;
 
+    Process waveOutTestProcess;
+
     private string ffmpegPath = "";
 
     public RawImage senderImage;
@@ -56,13 +58,13 @@ public class VideoSender : MonoBehaviour
         //     + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
         //     + " -f image2pipe -vcodec mjpeg -";
 
-        // string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
-        //          + " http://13.126.154.86:8090/"
-        //          + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
-        //          + " -f image2pipe -vcodec mjpeg -";
-
         string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
-       + " -f image2pipe -vcodec mjpeg -";
+                 + " http://13.126.154.86:8090/"
+                 + (SkypeManager.Instance.isCaller ? "feed1.ffm" : "feed2.ffm")
+                 + " -f image2pipe -vcodec mjpeg -";
+
+    //     string opt = "-y -f dshow -i video=\"" + UnityEngine.WebCamTexture.devices[0].name + "\":audio=\"" + UnityEngine.Microphone.devices[0] + "\""
+    //    + " -f image2pipe -vcodec mjpeg -";
 
         var info = new ProcessStartInfo(ffmpegPath, opt);
 
@@ -81,7 +83,6 @@ public class VideoSender : MonoBehaviour
         senderProcess.Disposed += new EventHandler(ProcessDisposed);
         senderProcess.OutputDataReceived += new DataReceivedEventHandler(ProcessOutputDataReceived);
         senderProcess.ErrorDataReceived += new DataReceivedEventHandler(ErrorDataReceived);
-
         senderProcess.Start();
 
         streamReceiver = new StreamReceiver(senderProcess.StandardOutput, senderImage, textureSize);
@@ -114,6 +115,9 @@ public class VideoSender : MonoBehaviour
 
         if (senderProcess != null)
             senderProcess.Kill();
+
+        if (waveOutTestProcess != null)
+            waveOutTestProcess.Kill();
     }
 
     void OnPreRender()
